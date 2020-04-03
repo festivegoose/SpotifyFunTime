@@ -1,0 +1,11 @@
+/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Application/bin/Debug/netstandard2.0/SpotifyFunTime.Application.deps.json
+/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Application/bin/Debug/netstandard2.0/SpotifyFunTime.Application.dll
+/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Application/bin/Debug/netstandard2.0/SpotifyFunTime.Application.pdb
+/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Application/bin/Debug/netstandard2.0/SpotifyFunTime.Contracts.dll
+/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Application/bin/Debug/netstandard2.0/SpotifyFunTime.Contracts.pdb
+/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Application/obj/Debug/netstandard2.0/SpotifyFunTime.Application.csprojAssemblyReference.cache
+/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Application/obj/Debug/netstandard2.0/SpotifyFunTime.Application.AssemblyInfoInputs.cache
+/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Application/obj/Debug/netstandard2.0/SpotifyFunTime.Application.AssemblyInfo.cs
+/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Application/obj/Debug/netstandard2.0/SpotifyFunTime.Application.csproj.CopyComplete
+/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Application/obj/Debug/netstandard2.0/SpotifyFunTime.Application.dll
+/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Application/obj/Debug/netstandard2.0/SpotifyFunTime.Application.pdb
