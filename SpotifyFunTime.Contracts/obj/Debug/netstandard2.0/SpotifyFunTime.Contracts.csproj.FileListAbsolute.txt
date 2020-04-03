@@ -1,8 +1,0 @@
-/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Contracts/bin/Debug/netstandard2.0/SpotifyFunTime.Contracts.deps.json
-/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Contracts/bin/Debug/netstandard2.0/SpotifyFunTime.Contracts.dll
-/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Contracts/bin/Debug/netstandard2.0/SpotifyFunTime.Contracts.pdb
-/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Contracts/obj/Debug/netstandard2.0/SpotifyFunTime.Contracts.csprojAssemblyReference.cache
-/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Contracts/obj/Debug/netstandard2.0/SpotifyFunTime.Contracts.AssemblyInfoInputs.cache
-/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Contracts/obj/Debug/netstandard2.0/SpotifyFunTime.Contracts.AssemblyInfo.cs
-/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Contracts/obj/Debug/netstandard2.0/SpotifyFunTime.Contracts.dll
-/Users/shspears/Documents/Personal/Projects/SpotifyFunTime/SpotifyFunTime.Contracts/obj/Debug/netstandard2.0/SpotifyFunTime.Contracts.pdb
