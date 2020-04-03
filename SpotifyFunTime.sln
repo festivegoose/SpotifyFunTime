@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpotifyFunTime.Web", "SpotifyFunTime.Web\SpotifyFunTime.Web.csproj", "{4607E92D-CFA6-4C21-9790-027269EA8B80}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpotifyFunTime.Contracts", "SpotifyFunTime.Contracts\SpotifyFunTime.Contracts.csproj", "{D79C8716-D2FB-49E6-9086-37658DA816BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpotifyFunTime.Application", "SpotifyFunTime.Application\SpotifyFunTime.Application.csproj", "{1D1D703C-C46B-465A-81AE-1DDD6DDE887E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4607E92D-CFA6-4C21-9790-027269EA8B80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4607E92D-CFA6-4C21-9790-027269EA8B80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4607E92D-CFA6-4C21-9790-027269EA8B80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4607E92D-CFA6-4C21-9790-027269EA8B80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D79C8716-D2FB-49E6-9086-37658DA816BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D79C8716-D2FB-49E6-9086-37658DA816BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D79C8716-D2FB-49E6-9086-37658DA816BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D79C8716-D2FB-49E6-9086-37658DA816BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D1D703C-C46B-465A-81AE-1DDD6DDE887E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D1D703C-C46B-465A-81AE-1DDD6DDE887E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D1D703C-C46B-465A-81AE-1DDD6DDE887E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D1D703C-C46B-465A-81AE-1DDD6DDE887E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
