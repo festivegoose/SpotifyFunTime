@@ -89,9 +89,6 @@ ipch/
 *.vspx
 *.sap
 
-# TFS 2012 Local Workspace
-/
-
 # Guidance Automation Toolkit
 *.gpState
 
@@ -251,3 +248,9 @@ ModelManifest.xml
 ._*.jpg
 logs/
 .idea/
+
+#VSCode
+.vscode
+
+#Spotify Client Configuration File
+appsettings.SpotifyClient.json
