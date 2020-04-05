@@ -35,6 +35,7 @@ export class Welcome extends Component {
     async populateUser() {
         const response = await fetch('api/v1/spotify/welcome');
         const data = await response.json();
-        this.setState({ displayName: data.displayName, loading: false });
+        const content = data.content;
+        this.setState({ displayName: content.displayName, loading: false });
     }
 }

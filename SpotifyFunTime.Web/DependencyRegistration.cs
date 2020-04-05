@@ -15,13 +15,13 @@ namespace SpotifyFunTime.Web
             configuration.GetSection("SpotifySettings").Bind(spotifyClientConfiguration);
             configuration.GetSection("SpotifyClientConfiguration").Bind(spotifyClientConfiguration);
 
-            services.AddSingleton(spotifyClientConfiguration);
+            services.AddSingleton<IClientConfiguration>(spotifyClientConfiguration);
 
             var httpClient = new HttpClient() { Timeout = TimeSpan.FromSeconds(5)};
             services.AddSingleton(httpClient);
 
             services.AddScoped<ISpotifyAuthClient, SpotifyAuthClient>();
-            services.AddScoped<ISpotifyClient, SpotifyClient>();
+            services.AddScoped<IClient, Client>();
             services.AddScoped<ISpotifyService, SpotifyService>();
         }
     }

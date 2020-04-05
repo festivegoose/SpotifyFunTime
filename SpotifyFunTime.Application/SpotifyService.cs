@@ -6,23 +6,23 @@ namespace SpotifyFunTime.Application
 {
     public class SpotifyService : ISpotifyService
     {
-        private readonly ISpotifyClient _client;
+        private readonly IClient _client;
 
-        public SpotifyService(ISpotifyClient client)
+        public SpotifyService(IClient client)
         {
             _client = client;
         }
 
-        public async Task<SpotifyUser> GetCurrentUser(TokenInfo info)
+        public async Task<ApiResponse<SpotifyUser>> GetCurrentUser(TokenSet tokenSet)
         {
-            var user = await _client.CallSpotify<SpotifyUser>(info, HttpMethod.Get, "me");
+            var userResponse = await _client.SendAsync<SpotifyUser>(tokenSet, HttpMethod.Get, "me");
 
-            return user;
+            return userResponse;
         }
     }
 
     public interface ISpotifyService
     {
-        Task<SpotifyUser> GetCurrentUser(TokenInfo info);
+        Task<ApiResponse<SpotifyUser>> GetCurrentUser(TokenSet tokenSet);
     }
 }

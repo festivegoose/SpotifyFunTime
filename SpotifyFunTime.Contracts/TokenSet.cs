@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace SpotifyFunTime.Contracts
 {
-    public class TokenInfo
+    public class TokenSet
     {
         [JsonProperty("access_token")]
         public string AccessToken { get; set; }

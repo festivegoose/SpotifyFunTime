@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Route } from 'react-router';
 import { Layout } from './components/Layout';
-import { Home } from './components/Home';
+import { Login } from './components/Login';
 import { Counter } from './components/Counter';
 import {Welcome} from "./components/Welcome";
 
@@ -13,7 +13,7 @@ export default class App extends Component {
   render () {
     return (
       <Layout>
-        <Route exact path='/' component={Home} />
+        <Route path='/login' component={Login} />
           <Route path='/welcome' component={Welcome} />
         <Route path='/counter' component={Counter} />
       </Layout>
