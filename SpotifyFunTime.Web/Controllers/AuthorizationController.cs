@@ -8,12 +8,12 @@ using SpotifyFunTime.Contracts;
 
 namespace SpotifyFunTime.Web.Controllers
 {
-    public class AuthorizationController : Controller
+    public class AuthorizationController : BaseController
     {
-        private readonly SpotifyClientConfiguration _config;
+        private readonly IClientConfiguration _config;
         private readonly ISpotifyAuthClient _authClient;
 
-        public AuthorizationController(SpotifyClientConfiguration config, ISpotifyAuthClient authClient)
+        public AuthorizationController(IClientConfiguration config, ISpotifyAuthClient authClient)
         {
             _config = config;
             _authClient = authClient;
@@ -43,12 +43,6 @@ namespace SpotifyFunTime.Web.Controllers
             SetSessionInfo(token);
 
             return Redirect("/welcome");
-        }
-
-        private void SetSessionInfo(TokenInfo info)
-        {
-            HttpContext.Session.SetString("_accessToken", info.AccessToken);
-            HttpContext.Session.SetString("_refreshToken", info.RefreshToken);
         }
     }
 }

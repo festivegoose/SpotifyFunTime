@@ -11,21 +11,31 @@ namespace SpotifyFunTime.Application
 {
     public class SpotifyAuthClient : ISpotifyAuthClient
     {
-        private readonly SpotifyClientConfiguration _config;
+        private readonly IClientConfiguration _config;
         private readonly HttpClient _client;
         
-        public SpotifyAuthClient(SpotifyClientConfiguration config, HttpClient client)
+        public SpotifyAuthClient(IClientConfiguration config, HttpClient client)
         {
             _config = config;
             _client = client;
         }
         
-        public async Task<TokenInfo> GetToken(string code)
+        public async Task<TokenSet> GetToken(string code)
         {
             var request = BuildRequest(code);
             var response = await _client.SendAsync(request);
             var content = await response.Content.ReadAsStringAsync();
-            var tokenResponse = JsonConvert.DeserializeObject<TokenInfo>(content);
+            var tokenResponse = JsonConvert.DeserializeObject<TokenSet>(content);
+
+            return tokenResponse;
+        }
+
+        public async Task<TokenSet> RefreshToken(string refreshToken)
+        {
+            var request = BuildRefreshRequest(refreshToken);
+            var response = await _client.SendAsync(request);
+            var content = await response.Content.ReadAsStringAsync();
+            var tokenResponse = JsonConvert.DeserializeObject<TokenSet>(content);
 
             return tokenResponse;
         }
@@ -51,6 +61,26 @@ namespace SpotifyFunTime.Application
             return request;
         }
 
+        private HttpRequestMessage BuildRefreshRequest(string refreshToken)
+        {
+            var body = new Dictionary<string, string>
+            {
+                {"grant_type", "refresh_token"},
+                {"refresh_token", refreshToken}
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{_config.AccountBaseUri}/api/token")
+            {
+                Headers =
+                {
+                    { "Authorization", $"Basic {GetBasicAuthToken()}" }
+                },
+                Content =  new FormUrlEncodedContent(body)
+            };
+
+            return request;
+        }
+
         private string GetBasicAuthToken()
         {
             var bytes = Encoding.UTF8.GetBytes($"{_config.ClientId}:{_config.ClientSecret}");
@@ -60,6 +90,7 @@ namespace SpotifyFunTime.Application
 
     public interface ISpotifyAuthClient
     {
-        Task<TokenInfo> GetToken(string code);
+        Task<TokenSet> GetToken(string code);
+        Task<TokenSet> RefreshToken(string refreshToken);
     }
 }

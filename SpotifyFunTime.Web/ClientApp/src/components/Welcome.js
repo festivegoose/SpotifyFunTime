@@ -1,28 +1,29 @@
 import React, { Component } from 'react';
+import FetchData from "../utilities/FetchData";
 
 export class Welcome extends Component {
 
     constructor(props) {
         super(props);
-        this.state = { displayName: '', loading: true };
+        this.state = { displayName: '', followerCount: 0, images: [], loading: true };
     }
 
     componentDidMount() {
         this.populateUser();
     }
 
-    static renderUserInfo(displayName) {
-        return (
-            <div>
-                {displayName}
-            </div>
-        );
-    }
-
     render() {
+        const { displayName, followerCount, images } = this.state;
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
-            : Welcome.renderUserInfo(this.state.displayName);
+            : 
+            <div>
+                {displayName}, Number of followers: {followerCount}
+                <br />
+                {images.map(image => (
+                    <img src={image.url} />
+                ))}
+            </div>
 
         return (
             <div>
@@ -33,8 +34,13 @@ export class Welcome extends Component {
     }
 
     async populateUser() {
-        const response = await fetch('api/v1/spotify/welcome');
-        const data = await response.json();
-        this.setState({ displayName: data.displayName, loading: false });
+        const data = await FetchData.get('api/v1/spotify/welcome');
+        console.log(data);
+        this.setState({ 
+            displayName: data.displayName, 
+            followerCount: data.followers.total, 
+            images: data.images,
+            loading: false 
+        });
     }
 }
