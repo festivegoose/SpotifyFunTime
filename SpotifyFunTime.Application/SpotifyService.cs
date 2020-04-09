@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using SpotifyFunTime.Contracts;
+using SpotifyFunTime.Contracts.Spotify;
 
 namespace SpotifyFunTime.Application
 {
@@ -13,9 +14,9 @@ namespace SpotifyFunTime.Application
             _client = client;
         }
 
-        public async Task<ApiResponse<SpotifyUser>> GetCurrentUser(TokenSet tokenSet)
+        public async Task<ApiResponse<User>> GetCurrentUser(TokenSet tokenSet)
         {
-            var userResponse = await _client.SendAsync<SpotifyUser>(tokenSet, HttpMethod.Get, "me");
+            var userResponse = await _client.SendAsync<User>(tokenSet, HttpMethod.Get, "me");
 
             return userResponse;
         }
@@ -23,6 +24,6 @@ namespace SpotifyFunTime.Application
 
     public interface ISpotifyService
     {
-        Task<ApiResponse<SpotifyUser>> GetCurrentUser(TokenSet tokenSet);
+        Task<ApiResponse<User>> GetCurrentUser(TokenSet tokenSet);
     }
 }

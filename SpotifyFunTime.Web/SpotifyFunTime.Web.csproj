@@ -26,7 +26,6 @@
         <IsTransformFile>True</IsTransformFile>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        <Content Include="ClientApp\src\components\Welcome.js" />
     </ItemGroup>
 
     <ItemGroup>

@@ -9,7 +9,6 @@ using SpotifyFunTime.Contracts;
 
 namespace SpotifyFunTime.Web.Controllers
 {
-    [ApiController]
     [Route("api/v1/[controller]")]
     public class SpotifyController : BaseController
     {
@@ -30,23 +29,29 @@ namespace SpotifyFunTime.Web.Controllers
 
         private async Task<IActionResult> MakeRequest<T>(Func<Task<ApiResponse<T>>> func, bool isRetry = false)
         {
+            if (string.IsNullOrWhiteSpace(Tokens.AccessToken))
+            {
+                return Unauthorized();
+            }
+            
             var result = await func();
 
-            var shouldRefresh = result.StatusCode == HttpStatusCode.Unauthorized && !isRetry;
-            if (shouldRefresh)
+            switch (result.StatusCode)
             {
-                var tokenSet = await _authClient.RefreshToken(Tokens.RefreshToken);
-                SetSessionInfo(tokenSet);
-
-                result = await func();
+                case HttpStatusCode.Unauthorized when isRetry:
+                    return Unauthorized();
+                case HttpStatusCode.Unauthorized:
+                {
+                    var tokenSet = await _authClient.RefreshToken(Tokens.RefreshToken);
+                    SetSessionInfo(tokenSet);
+                    await MakeRequest<T>(func, true);
+                    break;
+                }
+                case HttpStatusCode.OK:
+                    return Ok(result);
             }
-
-            if (result.StatusCode == HttpStatusCode.Unauthorized)
-            {
-                return Redirect("/login");
-            }
-
-            return Ok(result);
+            
+            return new StatusCodeResult((int)HttpStatusCode.InternalServerError);
         }
     }
 }
