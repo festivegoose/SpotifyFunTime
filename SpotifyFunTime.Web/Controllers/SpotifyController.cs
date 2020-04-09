@@ -1,8 +1,6 @@
 using System;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SpotifyFunTime.Application;
 using SpotifyFunTime.Contracts;
@@ -10,6 +8,7 @@ using SpotifyFunTime.Contracts;
 namespace SpotifyFunTime.Web.Controllers
 {
     [Route("api/v1/[controller]")]
+    [ApiController]
     public class SpotifyController : BaseController
     {
         private readonly ISpotifyAuthClient _authClient;
@@ -21,11 +20,25 @@ namespace SpotifyFunTime.Web.Controllers
             _service = service;
         }
 
+        [HttpGet]
         [Route("welcome")]
-        public async Task<IActionResult> Welcome()
-        {
-            return await MakeRequest(() => _service.GetCurrentUser(Tokens));
-        }
+        public async Task<IActionResult> Welcome() =>
+            await MakeRequest(() => _service.GetCurrentUser(Tokens));
+
+        // [HttpGet]
+        // [Route("last-ten")]
+        // public async Task<IActionResult> GetLastTenPlayedTracks() =>
+        //     await MakeRequest(() => _service.GetLastTenPlayedTracks(Tokens));
+
+        [HttpGet]
+        [Route("top-tracks/{timeRange}")]
+        public async Task<IActionResult> GetTopTracks(string timeRange, [FromQuery]int limit = 5) =>
+            await MakeRequest(() => _service.GetTopTracks(Tokens, timeRange, limit));
+
+        [HttpGet]
+        [Route("top-artists/{timeRange}")]
+        public async Task<IActionResult> GetTopArtists(string timeRange, [FromQuery]int limit = 5) =>
+            await MakeRequest(() => _service.GetTopArtists(Tokens, timeRange, limit));
 
         private async Task<IActionResult> MakeRequest<T>(Func<Task<ApiResponse<T>>> func, bool isRetry = false)
         {
