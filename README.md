@@ -2,6 +2,15 @@
 
 TODO: Make note of appsettings.spotifyclient.json file
 
+```
+{
+    "SpotifyClientConfiguration": {
+        "ClientId": "<your_client_id>",
+        "ClientSecret": "<your_client_secret>"
+    }
+}
+```
+
 ---
 
 ### Temp - some release publish/build notes

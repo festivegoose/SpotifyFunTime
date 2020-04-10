@@ -16,9 +16,9 @@ namespace SpotifyFunTime.Application
             _client = client;
         }
 
-        public async Task<ApiResponse<T>> SendAsync<T>(TokenSet tokenSet, HttpMethod method, string uri)
+        public async Task<ApiResponse<T>> SendAsync<T>(TokenSet tokenSet, HttpMethod method, string endpoint)
         {
-            var request = new HttpRequestMessage(method, $"{_config.ApiBaseUri}/{uri}")
+            var request = new HttpRequestMessage(method, $"{_config.ApiBaseUri}/{endpoint}")
             {
                 Headers =
                 {
@@ -44,6 +44,6 @@ namespace SpotifyFunTime.Application
 
     public interface IClient
     {
-        Task<ApiResponse<T>> SendAsync<T>(TokenSet tokenSet, HttpMethod method, string uri);
+        Task<ApiResponse<T>> SendAsync<T>(TokenSet tokenSet, HttpMethod method, string endpoint);
     }
 }
