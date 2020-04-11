@@ -9,6 +9,9 @@ namespace SpotifyFunTime.Web.Controllers
     [ApiController]
     public class SpotifyController : BaseRequestController
     {
+        private const int MAX_TOP_COUNT = 5;
+        private const int MAX_PAGING_LIMIT = 50;
+
         private readonly ISpotifyService _service;
 
         public SpotifyController(ISpotifyAuthClient authClient, ISpotifyService service) : base(authClient)
@@ -28,12 +31,17 @@ namespace SpotifyFunTime.Web.Controllers
 
         [HttpGet]
         [Route("top-tracks/{timeRange}")]
-        public async Task<IActionResult> GetTopTracks(string timeRange, [FromQuery]int limit = 5) =>
-            await MakeRequest(() => _service.GetTopTracks(Tokens, timeRange, limit));
+        public async Task<IActionResult> GetUserTopTracks(string timeRange) =>
+            await MakeRequest(() => _service.GetUserTopTracks(Tokens, timeRange, MAX_TOP_COUNT));
 
         [HttpGet]
         [Route("top-artists/{timeRange}")]
-        public async Task<IActionResult> GetTopArtists(string timeRange, [FromQuery]int limit = 5) =>
-            await MakeRequest(() => _service.GetTopArtists(Tokens, timeRange, limit));
+        public async Task<IActionResult> GetUserTopArtists(string timeRange) =>
+            await MakeRequest(() => _service.GetUserTopArtists(Tokens, timeRange, MAX_TOP_COUNT));
+
+        [HttpGet]
+        [Route("saved-tracks")]
+        public async Task<IActionResult> GetUserSavedTracks() =>
+            await MakeRequest(() => _service.GetUserSavedTracks(Tokens, MAX_PAGING_LIMIT));
     }
 }

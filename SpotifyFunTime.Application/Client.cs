@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SpotifyFunTime.Contracts;
+using SpotifyFunTime.Contracts.Spotify;
 
 namespace SpotifyFunTime.Application
 {
@@ -21,7 +23,8 @@ namespace SpotifyFunTime.Application
 
         public async Task<ApiResponse<T>> SendAsync<T>(TokenSet tokenSet, HttpMethod method, string endpoint)
         {
-            var request = new HttpRequestMessage(method, $"{_config.ApiBaseUri}/{endpoint}")
+            var requestUrl = endpoint.Contains("https://") ? endpoint : $"{_config.ApiBaseUri}/{endpoint}";
+            var request = new HttpRequestMessage(method, requestUrl)
             {
                 Headers =
                 {
@@ -46,8 +49,7 @@ namespace SpotifyFunTime.Application
 
         public async Task<ApiResponse<T>> SendAsyncWithCaching<T>(TokenSet tokenSet, HttpMethod method, string endpoint)
         {
-            var requestUrl = $"{_config.ApiBaseUri}/{endpoint}";
-            var cacheKey = $"{requestUrl}_{tokenSet.AccessToken}";
+            var cacheKey = $"{endpoint}_{tokenSet.AccessToken}";
 
             if (_cache.TryGet(cacheKey, out T content))
             {
@@ -66,11 +68,49 @@ namespace SpotifyFunTime.Application
 
             return response;
         }
+
+        public async Task<ApiResponse<List<T>>> SendAsyncWithPagedCaching<T>(TokenSet tokenSet, HttpMethod method, string endpoint)
+        {
+            var endpointUrlWithoutParams = endpoint.Split('?')[0];
+            var cacheKey = $"{endpointUrlWithoutParams}_paged_{tokenSet.AccessToken}";
+            var itemCollection = new List<T>();
+
+            if (_cache.TryGet(cacheKey, out List<T> content))
+            {
+                return new ApiResponse<List<T>>(HttpStatusCode.OK)
+                {
+                    Content = content
+                };
+            }
+
+            var response = new ApiResponse<Paging<T>>(HttpStatusCode.OK);
+
+            while(itemCollection.Count == 0 || !string.IsNullOrWhiteSpace(response.Content.Next))
+            {
+                response = await SendAsync<Paging<T>>(tokenSet, method, endpoint);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    itemCollection.AddRange(response.Content.Items);
+                    endpoint = response.Content.Next;
+                }
+            }
+
+            var completedResponse = new ApiResponse<List<T>>(HttpStatusCode.OK)
+            {
+                Content = itemCollection
+            };
+
+            _cache.Set(cacheKey, completedResponse.Content);
+
+            return completedResponse;
+        }
     }
 
     public interface IClient
     {
         Task<ApiResponse<T>> SendAsync<T>(TokenSet tokenSet, HttpMethod method, string endpoint);
         Task<ApiResponse<T>> SendAsyncWithCaching<T>(TokenSet tokenSet, HttpMethod method, string endpoint);
+        Task<ApiResponse<List<T>>> SendAsyncWithPagedCaching<T>(TokenSet tokenSet, HttpMethod method, string endpoint);
     }
 }
