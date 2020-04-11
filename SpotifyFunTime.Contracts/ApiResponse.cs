@@ -12,5 +12,7 @@ namespace SpotifyFunTime.Contracts
         public HttpStatusCode StatusCode { get; set; }
         public T Content { get; set; }
         public string ReasonPhrase { get; set; }
+
+        public bool IsSuccessStatusCode => StatusCode == HttpStatusCode.OK;
     }
 }

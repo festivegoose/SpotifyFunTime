@@ -15,17 +15,17 @@ namespace SpotifyFunTime.Application
         }
 
         public async Task<ApiResponse<User>> GetCurrentUser(TokenSet tokenSet) =>
-            await _client.SendAsync<User>(tokenSet, HttpMethod.Get, "me");
+            await _client.SendAsyncWithCaching<User>(tokenSet, HttpMethod.Get, "me");
 
         //TODO: Results of this aren't accurate - see GitHub issue https://github.com/spotify/web-api/issues/1441
         public async Task<ApiResponse<Paging<PlayHistory>>> GetLastTenPlayedTracks(TokenSet tokenSet) =>
             await _client.SendAsync<Paging<PlayHistory>>(tokenSet, HttpMethod.Get, "me/player/recently-played");
 
         public async Task<ApiResponse<Paging<Track>>> GetTopTracks(TokenSet tokenSet, string timeRange, int limit) =>
-            await _client.SendAsync<Paging<Track>>(tokenSet, HttpMethod.Get, $"me/top/tracks?limit={limit}&time_range={timeRange}");
+            await _client.SendAsyncWithCaching<Paging<Track>>(tokenSet, HttpMethod.Get, $"me/top/tracks?limit={limit}&time_range={timeRange}");
 
         public async Task<ApiResponse<Paging<Artist>>> GetTopArtists(TokenSet tokenSet, string timeRange, int limit) =>
-            await _client.SendAsync<Paging<Artist>>(tokenSet, HttpMethod.Get, $"me/top/artists?limit={limit}&time_range={timeRange}");
+            await _client.SendAsyncWithCaching<Paging<Artist>>(tokenSet, HttpMethod.Get, $"me/top/artists?limit={limit}&time_range={timeRange}");
     }
 
     public interface ISpotifyService

@@ -11,7 +11,7 @@ namespace SpotifyFunTime.Web.Controllers
     {
         private readonly ISpotifyService _service;
 
-        public SpotifyController(IContentCache cache, ISpotifyAuthClient authClient, ISpotifyService service) : base(cache, authClient)
+        public SpotifyController(ISpotifyAuthClient authClient, ISpotifyService service) : base(authClient)
         {
             _service = service;
         }
@@ -19,7 +19,7 @@ namespace SpotifyFunTime.Web.Controllers
         [HttpGet]
         [Route("welcome")]
         public async Task<IActionResult> Welcome() =>
-            await MakeCachedRequest(() => _service.GetCurrentUser(Tokens));
+            await MakeRequest(() => _service.GetCurrentUser(Tokens));
 
         // [HttpGet]
         // [Route("last-ten")]
