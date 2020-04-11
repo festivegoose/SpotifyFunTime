@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SpotifyFunTime.Application;
@@ -19,6 +20,9 @@ namespace SpotifyFunTime.Web
 
             var httpClient = new HttpClient() { Timeout = TimeSpan.FromSeconds(5)};
             services.AddSingleton(httpClient);
+
+            services.AddSingleton<IMemoryCache, MemoryCache>();
+            services.AddSingleton<IContentCache, ContentCache>();
 
             services.AddScoped<ISpotifyAuthClient, SpotifyAuthClient>();
             services.AddScoped<IClient, Client>();
