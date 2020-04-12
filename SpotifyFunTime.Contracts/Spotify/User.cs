@@ -5,11 +5,10 @@ namespace SpotifyFunTime.Contracts.Spotify
 {
     public class User
     {
+        public string Id { get; set; }
         [JsonProperty("display_name")]
         public string DisplayName { get; set; }
-        [JsonProperty("images")]
         public List<Image> Images { get; set; }
-        [JsonProperty("followers")]
         public Followers Followers { get; set; }
     }
 }
