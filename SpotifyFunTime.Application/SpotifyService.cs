@@ -34,6 +34,32 @@ namespace SpotifyFunTime.Application
         public async Task<ApiResponse<List<SavedTrack>>> GetUserSavedTracks(TokenSet tokenSet, int limit = 50) =>
             await _client.SendAsyncWithPagedCaching<SavedTrack>(tokenSet, HttpMethod.Get, $"me/tracks?limit={limit}");
 
+        public async Task<ApiResponse<List<Artist>>> GetArtists(TokenSet tokenSet, List<string> artistIds)
+        {
+            var artistList = new List<Artist>();
+            var completedCount = 0;
+
+            while(completedCount != artistIds.Count)
+            {
+                var currentSet = artistIds.Skip(completedCount).Take(50);
+                var idString = string.Join(",", currentSet);
+                var artistsResponse = await _client.SendAsync<ArtistsWrapper>(tokenSet, HttpMethod.Get, $"artists?ids={idString}");
+
+                if (!artistsResponse.IsSuccessStatusCode)
+                {
+                    break;
+                }
+                
+                artistList.AddRange(artistsResponse.Content.Artists);
+                completedCount += artistsResponse.Content.Artists.Count;
+            }
+
+            return new ApiResponse<List<Artist>>(HttpStatusCode.OK)
+            {
+                Content = artistList
+            };
+        }
+
         public async Task<ApiResponse<List<SavedTrack>>> GetUserMostPopularTracks(TokenSet tokenSet, int limit)
         {
             var response = await GetUserSavedTracks(tokenSet);
@@ -57,7 +83,24 @@ namespace SpotifyFunTime.Application
 
             if (response.IsSuccessStatusCode)
             {
-                var leastPopularTracks = response.Content.OrderBy(x => x.Track.Popularity).Take(limit).ToList();
+                var unpopularTracks = response.Content.Where(x => x.Track.Popularity == 0);
+
+                if (unpopularTracks.Count() < limit)
+                {
+                    unpopularTracks = response.Content.OrderBy(x => x.Track.Popularity).Take(limit);
+                }
+
+                var artistIds = unpopularTracks.SelectMany(x => x.Track.Artists).Select(x => x.Id).Distinct().ToList();
+                var artists = (await GetArtists(tokenSet, artistIds)).Content.ToDictionary(x => x.Id);
+
+                unpopularTracks.ToList().ForEach(savedTrack => {
+                    savedTrack.Track.Artists.ForEach(artist => {
+                        artist.Popularity = artists[artist.Id].Popularity;
+                    });
+                });
+
+                var leastPopularTracks = unpopularTracks.OrderBy(x => x.Track.Popularity).ThenBy(x => x.Track.Artists.Sum(a => a.Popularity)).Take(limit).ToList();
+                
 
                 return new ApiResponse<List<SavedTrack>>(HttpStatusCode.OK)
                 {

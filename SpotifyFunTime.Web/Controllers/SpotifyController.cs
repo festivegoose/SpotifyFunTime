@@ -48,12 +48,10 @@ namespace SpotifyFunTime.Web.Controllers
         public async Task<IActionResult> GetUserMostPopularTracks() =>
             await MakeRequest(() => _service.GetUserMostPopularTracks(Tokens, MAX_TOP_COUNT));
 
-        // TODO: This returns top 5 least popular songs, but there are generally way more tracks with a popularity of '0'
-        //       perhaps, we should adjust to also take into account how unpopular the artist is?
-        // [HttpGet]
-        // [Route("unpopular-tracks")]
-        // public async Task<IActionResult> GetUserLeastPopularTracks() =>
-        //     await MakeRequest(() => _service.GetUserLeastPopularTracks(Tokens, MAX_TOP_COUNT));
+        [HttpGet]
+        [Route("unpopular-tracks")]
+        public async Task<IActionResult> GetUserLeastPopularTracks() =>
+            await MakeRequest(() => _service.GetUserLeastPopularTracks(Tokens, MAX_TOP_COUNT));
 
         //TODO: Most popular artists in saved tracks
     }
