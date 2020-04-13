@@ -90,12 +90,12 @@ namespace SpotifyFunTime.Application
                     unpopularTracks = response.Content.OrderBy(x => x.Track.Popularity).Take(limit);
                 }
 
-                var artistIds = unpopularTracks.SelectMany(x => x.Track.Artists).Select(x => x.Id).Distinct().ToList();
-                var artists = (await GetArtists(tokenSet, artistIds)).Content.ToDictionary(x => x.Id);
+                var unpopularArtistIds = unpopularTracks.SelectMany(x => x.Track.Artists).Select(x => x.Id).Distinct().ToList();
+                var unpopularArtists = (await GetArtists(tokenSet, unpopularArtistIds)).Content.ToDictionary(x => x.Id);
 
                 unpopularTracks.ToList().ForEach(savedTrack => {
                     savedTrack.Track.Artists.ForEach(artist => {
-                        artist.Popularity = artists[artist.Id].Popularity;
+                        artist.Popularity = unpopularArtists[artist.Id].Popularity;
                     });
                 });
 
