@@ -23,6 +23,9 @@ namespace SpotifyFunTime.Application
         public async Task<ApiResponse<User>> GetCurrentUser(TokenSet tokenSet) =>
             await _client.SendAsyncWithCaching<User>(tokenSet, HttpMethod.Get, "me");
 
+        public async Task<ApiResponse<AudioFeatures>> GetTrackAudioFeatures(TokenSet tokenSet, string trackId) =>
+            await _client.SendAsync<AudioFeatures>(tokenSet, HttpMethod.Get, $"audio-features/{trackId}");
+
         //TODO: Results of this aren't accurate - see GitHub issue https://github.com/spotify/web-api/issues/1441
         public async Task<ApiResponse<List<PlayHistory>>> GetLastTenPlayedTracks(TokenSet tokenSet) =>
             (await _client.SendAsync<Paging<PlayHistory>>(tokenSet, HttpMethod.Get, "me/player/recently-played")).ToListContent();
@@ -64,7 +67,7 @@ namespace SpotifyFunTime.Application
             };
         }
 
-        public async Task<ApiResponse<List<SavedTrack>>> GetUserMostPopularTracks(TokenSet tokenSet, int limit)
+        public async Task<ApiResponse<List<SavedTrack>>> GetUserMostPopularSavedTracks(TokenSet tokenSet, int limit)
         {
             var response = await GetUserSavedTracks(tokenSet);
 
@@ -81,7 +84,7 @@ namespace SpotifyFunTime.Application
             return response;
         }
 
-        public async Task<ApiResponse<List<SavedTrack>>> GetUserLeastPopularTracks(TokenSet tokenSet, int limit)
+        public async Task<ApiResponse<List<SavedTrack>>> GetUserLeastPopularSavedTracks(TokenSet tokenSet, int limit)
         {
             var response = await GetUserSavedTracks(tokenSet);
 
@@ -113,6 +116,58 @@ namespace SpotifyFunTime.Application
             }
 
             return response;
+        }
+
+        public async Task<ApiResponse<List<Artist>>> GetUserMostPopularSavedArtists(TokenSet tokenSet, int limit)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var savedArtistIds = savedTrackResponse.Content.SelectMany(x => x.Track.Artists).Select(x => x.Id).Distinct().ToList();
+                var savedArtistsResponse = await GetArtists(tokenSet, savedArtistIds, true);
+
+                if (savedArtistsResponse.IsSuccessStatusCode)
+                {
+                    return new ApiResponse<List<Artist>>(HttpStatusCode.OK)
+                    {
+                        Content = savedArtistsResponse.Content.OrderByDescending(x => x.Popularity).Take(limit).ToList()
+                    };
+                }
+
+                return savedArtistsResponse;
+            }
+
+            return new ApiResponse<List<Artist>>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
+        }
+
+        public async Task<ApiResponse<List<Artist>>> GetUserLeastPopularSavedArtists(TokenSet tokenSet, int limit)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var savedArtistIds = savedTrackResponse.Content.SelectMany(x => x.Track.Artists).Select(x => x.Id).Distinct().ToList();
+                var savedArtistsResponse = await GetArtists(tokenSet, savedArtistIds, true);
+
+                if (savedArtistsResponse.IsSuccessStatusCode)
+                {
+                    return new ApiResponse<List<Artist>>(HttpStatusCode.OK)
+                    {
+                        Content = savedArtistsResponse.Content.OrderBy(x => x.Popularity).Take(limit).ToList()
+                    };
+                }
+
+                return savedArtistsResponse;
+            }
+
+            return new ApiResponse<List<Artist>>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
         }
 
         public async Task<ApiResponse<Dictionary<string, int>>> GetUserTopGenres(TokenSet tokenSet, string timeRange, int limit)
@@ -165,13 +220,16 @@ namespace SpotifyFunTime.Application
     public interface ISpotifyService
     {
         Task<ApiResponse<User>> GetCurrentUser(TokenSet tokenSet);
+        Task<ApiResponse<AudioFeatures>> GetTrackAudioFeatures(TokenSet tokenSet, string trackId);
         Task<ApiResponse<List<PlayHistory>>> GetLastTenPlayedTracks(TokenSet tokenSet);
         Task<ApiResponse<List<Track>>> GetUserTopTracks(TokenSet tokenSet, string timeRange, int limit);
         Task<ApiResponse<List<Artist>>> GetUserTopArtists(TokenSet tokenSet, string timeRange, int limit);
         Task<ApiResponse<List<SavedTrack>>> GetUserSavedTracks(TokenSet tokenSet, int limit = 50);
-        Task<ApiResponse<List<SavedTrack>>> GetUserMostPopularTracks(TokenSet tokenSet, int limit);
-        Task<ApiResponse<List<SavedTrack>>> GetUserLeastPopularTracks(TokenSet tokenSet, int limit);
+        Task<ApiResponse<List<SavedTrack>>> GetUserMostPopularSavedTracks(TokenSet tokenSet, int limit);
+        Task<ApiResponse<List<SavedTrack>>> GetUserLeastPopularSavedTracks(TokenSet tokenSet, int limit);
         Task<ApiResponse<Dictionary<string, int>>> GetUserTopGenres(TokenSet tokenSet, string timeRange, int limit);
         Task<ApiResponse<Dictionary<string, int>>> GetUserSavedTracksByMonth(TokenSet tokenSet);
+        Task<ApiResponse<List<Artist>>> GetUserMostPopularSavedArtists(TokenSet tokenSet, int limit);
+        Task<ApiResponse<List<Artist>>> GetUserLeastPopularSavedArtists(TokenSet tokenSet, int limit);
     }
 }
