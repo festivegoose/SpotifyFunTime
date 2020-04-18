@@ -34,7 +34,7 @@ export class Welcome extends Component {
     }
 
     async populateUser() {
-        const data = await FetchData.get('api/v1/spotify/welcome');
+        const data = await FetchData.get('api/v1/user/welcome');
         console.log(data);
         this.setState({ 
             displayName: data.displayName, 
