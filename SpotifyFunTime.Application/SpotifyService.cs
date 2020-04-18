@@ -6,11 +6,13 @@ using SpotifyFunTime.Application.Utilities;
 using SpotifyFunTime.Contracts;
 using SpotifyFunTime.Contracts.Spotify;
 using System.Net;
+using System;
 
 namespace SpotifyFunTime.Application
 {
     public class SpotifyService : ISpotifyService
     {
+        private const int MAX_LIMIT_VALUE = 50;
         private readonly IClient _client;
 
         public SpotifyService(IClient client)
@@ -34,16 +36,18 @@ namespace SpotifyFunTime.Application
         public async Task<ApiResponse<List<SavedTrack>>> GetUserSavedTracks(TokenSet tokenSet, int limit = 50) =>
             await _client.SendAsyncWithPagedCaching<SavedTrack>(tokenSet, HttpMethod.Get, $"me/tracks?limit={limit}");
 
-        public async Task<ApiResponse<List<Artist>>> GetArtists(TokenSet tokenSet, List<string> artistIds)
+        public async Task<ApiResponse<List<Artist>>> GetArtists(TokenSet tokenSet, List<string> artistIds, bool shouldCache = false)
         {
             var artistList = new List<Artist>();
             var completedCount = 0;
 
             while(completedCount != artistIds.Count)
             {
-                var currentSet = artistIds.Skip(completedCount).Take(50);
+                var currentSet = artistIds.Skip(completedCount).Take(MAX_LIMIT_VALUE);
                 var idString = string.Join(",", currentSet);
-                var artistsResponse = await _client.SendAsync<ArtistsWrapper>(tokenSet, HttpMethod.Get, $"artists?ids={idString}");
+                var artistsResponse = shouldCache ?
+                    await _client.SendAsyncWithCaching<ArtistsWrapper>(tokenSet, HttpMethod.Get, $"artists?ids={idString}") :
+                    await _client.SendAsync<ArtistsWrapper>(tokenSet, HttpMethod.Get, $"artists?ids={idString}");
 
                 if (!artistsResponse.IsSuccessStatusCode)
                 {
@@ -110,6 +114,52 @@ namespace SpotifyFunTime.Application
 
             return response;
         }
+
+        public async Task<ApiResponse<Dictionary<string, int>>> GetUserTopGenres(TokenSet tokenSet, string timeRange, int limit)
+        {
+            var topArtistResponse = await GetUserTopArtists(tokenSet, timeRange, MAX_LIMIT_VALUE);
+
+            if (topArtistResponse.IsSuccessStatusCode)
+            {
+                var genres = topArtistResponse.Content.SelectMany(x => x.Genres);
+                var topGenres = genres.GroupBy(x => x).OrderByDescending(g => g.Count()).Take(limit).ToDictionary(g => g.Key, g => g.Count());
+
+                return new ApiResponse<Dictionary<string, int>>(HttpStatusCode.OK)
+                {
+                    Content = topGenres
+                };
+            }
+
+            return new ApiResponse<Dictionary<string, int>>(topArtistResponse.StatusCode)
+            {
+                ReasonPhrase = topArtistResponse.ReasonPhrase
+            };
+        }
+
+        public async Task<ApiResponse<Dictionary<string, int>>> GetUserSavedTracksByMonth(TokenSet tokenSet)
+        {
+            var savedTracksResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTracksResponse.IsSuccessStatusCode)
+            {
+                var lastYear = DateTime.UtcNow.AddYears(-1).Year;
+                var nextMonth = DateTime.UtcNow.AddMonths(1).Month;
+                var fromDate = new DateTime(lastYear, nextMonth, 1);
+                var savedTracksFromLastYear = savedTracksResponse.Content.Where(x => x.AddedAt >= fromDate);
+                var trackGroupings = savedTracksFromLastYear.GroupBy(x => $"{x.AddedAt.Year}-{x.AddedAt.Month.ToString("00")}").OrderBy(g => g.Key);
+                var stats = trackGroupings.ToDictionary(g => g.Key, g => g.Count());
+
+                return new ApiResponse<Dictionary<string, int>>(HttpStatusCode.OK)
+                {
+                    Content = stats
+                };
+            }
+
+            return new ApiResponse<Dictionary<string, int>>(savedTracksResponse.StatusCode)
+            {
+                ReasonPhrase = savedTracksResponse.ReasonPhrase
+            };
+        }
     }
 
     public interface ISpotifyService
@@ -121,5 +171,7 @@ namespace SpotifyFunTime.Application
         Task<ApiResponse<List<SavedTrack>>> GetUserSavedTracks(TokenSet tokenSet, int limit = 50);
         Task<ApiResponse<List<SavedTrack>>> GetUserMostPopularTracks(TokenSet tokenSet, int limit);
         Task<ApiResponse<List<SavedTrack>>> GetUserLeastPopularTracks(TokenSet tokenSet, int limit);
+        Task<ApiResponse<Dictionary<string, int>>> GetUserTopGenres(TokenSet tokenSet, string timeRange, int limit);
+        Task<ApiResponse<Dictionary<string, int>>> GetUserSavedTracksByMonth(TokenSet tokenSet);
     }
 }
