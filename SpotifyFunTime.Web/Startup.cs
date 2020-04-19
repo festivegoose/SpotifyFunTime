@@ -26,7 +26,7 @@ namespace SpotifyFunTime.Web
             
             services.AddSession(options =>
             {
-                options.IdleTimeout = TimeSpan.FromMinutes(10);
+                options.IdleTimeout = TimeSpan.FromMinutes(_configuration.GetValue<int>("SessionTimeoutMinutes"));
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true; 
             });

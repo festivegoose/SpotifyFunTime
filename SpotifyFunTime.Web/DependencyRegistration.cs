@@ -21,6 +21,11 @@ namespace SpotifyFunTime.Web
             var httpClient = new HttpClient() { Timeout = TimeSpan.FromSeconds(5)};
             services.AddSingleton(httpClient);
 
+            var cacheConfiguration = new CacheConfiguration
+            {
+                Expiration = configuration.GetValue<int>("CacheExpirationMinutes")
+            };
+            services.AddSingleton(cacheConfiguration);
             services.AddSingleton<IMemoryCache, MemoryCache>();
             services.AddSingleton<IContentCache, ContentCache>();
 
