@@ -488,7 +488,6 @@ namespace SpotifyFunTime.Application
                     track.AudioFeatures = audioFeatures[track.Id];
                 });
 
-                var test = trackList.OrderByDescending(x => x.AudioFeatures.Loudness).Take(5);
                 var highestLoudnessSong = trackList.OrderByDescending(x => x.AudioFeatures.Loudness).First();
 
                 return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
@@ -517,7 +516,6 @@ namespace SpotifyFunTime.Application
                     track.AudioFeatures = audioFeatures[track.Id];
                 });
 
-                var test = trackList.OrderBy(x => x.AudioFeatures.Loudness).Take(5);
                 var lowestLoudnessSong = trackList.OrderBy(x => x.AudioFeatures.Loudness).First();
 
                 return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
