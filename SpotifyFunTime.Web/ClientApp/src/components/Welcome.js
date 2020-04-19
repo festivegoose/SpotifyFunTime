@@ -34,7 +34,7 @@ export class Welcome extends Component {
     }
 
     async populateUser() {
-        const data = await FetchData.get('api/v1/user/welcome');
+        const data = await FetchData.get('api/v1/user');
         console.log(data);
         this.setState({ 
             displayName: data.displayName, 

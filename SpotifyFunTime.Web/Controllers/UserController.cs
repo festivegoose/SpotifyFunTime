@@ -1,10 +1,13 @@
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SpotifyFunTime.Application;
+using SpotifyFunTime.Contracts;
+using SpotifyFunTime.Contracts.Spotify;
 
 namespace SpotifyFunTime.Web.Controllers
 {
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/user")]
     [ApiController]
     public class UserController : BaseRequestController
     {
@@ -15,9 +18,13 @@ namespace SpotifyFunTime.Web.Controllers
             _service = service;
         }
 
+        /// <summary>
+        /// Returns the current logged in Spotify User.
+        /// </summary>
         [HttpGet]
-        [Route("welcome")]
-        public async Task<IActionResult> Welcome() =>
+        [Route("")]
+        [ProducesResponseType(typeof(ApiResponse<User>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetCurrentUser() =>
             await MakeRequest(() => _service.GetCurrentUser(Tokens));
     }
 }
