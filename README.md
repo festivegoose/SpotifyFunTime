@@ -2,8 +2,6 @@
 
 SpotifyFunTime is a web application that allows you to visualize all sorts of fun stats about your Spotify library and play history.
 
----
-
 ## Requirements to build
 
 When a user logs into the site, they will be prompted to allow your Spotify app access to their account.
@@ -24,13 +22,9 @@ When a user logs into the site, they will be prompted to allow your Spotify app 
 }
 ```
 
----
-
 ## Swagger
 
 Swagger doc can be found at `/swagger`. Authentication is required for all endpoints (see _Backend Notes > Authentication_ below). If you login first at `/login`, your session will become active and you can then test any of the listed endpoints.
-
----
 
 ## Backend Notes
 
