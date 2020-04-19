@@ -4,6 +4,8 @@ namespace SpotifyFunTime.Contracts.Spotify
 {
     public class AudioFeatures
     {
+        [JsonProperty("id")]
+        public string TrackId { get; set; }
         [JsonProperty("duration_ms")]
         public int DurationMs { get; set; }
         public AudioKey Key { get; set; }

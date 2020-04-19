@@ -7,12 +7,14 @@ using SpotifyFunTime.Contracts;
 using SpotifyFunTime.Contracts.Spotify;
 using System.Net;
 using System;
+using SpotifyFunTime.Contracts.Custom;
 
 namespace SpotifyFunTime.Application
 {
     public class SpotifyService : ISpotifyService
     {
-        private const int MAX_LIMIT_VALUE = 50;
+        private const int MAX_ARTIST_LIMIT_VALUE = 50;
+        private const int MAX_FEATURE_LIMIT_VALUE = 100;
         private readonly IClient _client;
 
         public SpotifyService(IClient client)
@@ -23,8 +25,36 @@ namespace SpotifyFunTime.Application
         public async Task<ApiResponse<User>> GetCurrentUser(TokenSet tokenSet) =>
             await _client.SendAsyncWithCaching<User>(tokenSet, HttpMethod.Get, "me");
 
-        public async Task<ApiResponse<AudioFeatures>> GetTrackAudioFeatures(TokenSet tokenSet, string trackId) =>
+        public async Task<ApiResponse<AudioFeatures>> GetAudioFeaturesForTrack(TokenSet tokenSet, string trackId) =>
             await _client.SendAsync<AudioFeatures>(tokenSet, HttpMethod.Get, $"audio-features/{trackId}");
+
+        public async Task<ApiResponse<List<AudioFeatures>>> GetAudioFeaturesForTracks(TokenSet tokenSet, List<string> trackIds, bool shouldCache = false)
+        {
+            var featuresList = new List<AudioFeatures>();
+            var completedCount = 0;
+
+            while(completedCount != trackIds.Count)
+            {
+                var currentSet = trackIds.Skip(completedCount).Take(MAX_FEATURE_LIMIT_VALUE);
+                var idString = string.Join(",", currentSet);
+                var featuresResponse = shouldCache ?
+                    await _client.SendAsyncWithCaching<AudioFeaturesWrapper>(tokenSet, HttpMethod.Get, $"audio-features?ids={idString}") :
+                    await _client.SendAsync<AudioFeaturesWrapper>(tokenSet, HttpMethod.Get, $"audio-features?ids={idString}");
+
+                if (!featuresResponse.IsSuccessStatusCode)
+                {
+                    break;
+                }
+                
+                featuresList.AddRange(featuresResponse.Content.AudioFeatures);
+                completedCount += featuresResponse.Content.AudioFeatures.Count;
+            }
+
+            return new ApiResponse<List<AudioFeatures>>(HttpStatusCode.OK)
+            {
+                Content = featuresList
+            };
+        }
 
         //TODO: Results of this aren't accurate - see GitHub issue https://github.com/spotify/web-api/issues/1441
         public async Task<ApiResponse<List<PlayHistory>>> GetLastTenPlayedTracks(TokenSet tokenSet) =>
@@ -46,7 +76,7 @@ namespace SpotifyFunTime.Application
 
             while(completedCount != artistIds.Count)
             {
-                var currentSet = artistIds.Skip(completedCount).Take(MAX_LIMIT_VALUE);
+                var currentSet = artistIds.Skip(completedCount).Take(MAX_ARTIST_LIMIT_VALUE);
                 var idString = string.Join(",", currentSet);
                 var artistsResponse = shouldCache ?
                     await _client.SendAsyncWithCaching<ArtistsWrapper>(tokenSet, HttpMethod.Get, $"artists?ids={idString}") :
@@ -172,7 +202,7 @@ namespace SpotifyFunTime.Application
 
         public async Task<ApiResponse<Dictionary<string, int>>> GetUserTopGenres(TokenSet tokenSet, string timeRange, int limit)
         {
-            var topArtistResponse = await GetUserTopArtists(tokenSet, timeRange, MAX_LIMIT_VALUE);
+            var topArtistResponse = await GetUserTopArtists(tokenSet, timeRange, MAX_ARTIST_LIMIT_VALUE);
 
             if (topArtistResponse.IsSuccessStatusCode)
             {
@@ -215,12 +245,299 @@ namespace SpotifyFunTime.Application
                 ReasonPhrase = savedTracksResponse.ReasonPhrase
             };
         }
+
+        public async Task<ApiResponse<TrackWithAudioFeatures>> GetUserMostDanceableSavedTrack(TokenSet tokenSet)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var trackList = savedTrackResponse.Content.Select(x => new TrackWithAudioFeatures(x.Track)).ToList();
+                var savedTrackIds = savedTrackResponse.Content.Select(x => x.Track.Id).Distinct().ToList();
+                var audioFeatures = (await GetAudioFeaturesForTracks(tokenSet, savedTrackIds, true)).Content.ToDictionary(x => x.TrackId);
+
+                trackList.ForEach(track => {
+                    track.AudioFeatures = audioFeatures[track.Id];
+                });
+
+                var mostDanceableTrack = trackList.OrderByDescending(x => x.AudioFeatures.Danceability).First();
+
+                return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
+                {
+                    Content = mostDanceableTrack
+                };
+            }
+
+            return new ApiResponse<TrackWithAudioFeatures>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
+        }
+
+        public async Task<ApiResponse<TrackWithAudioFeatures>> GetUserLeastDanceableSavedTrack(TokenSet tokenSet)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var trackList = savedTrackResponse.Content.Select(x => new TrackWithAudioFeatures(x.Track)).ToList();
+                var savedTrackIds = savedTrackResponse.Content.Select(x => x.Track.Id).Distinct().ToList();
+                var audioFeatures = (await GetAudioFeaturesForTracks(tokenSet, savedTrackIds, true)).Content.ToDictionary(x => x.TrackId);
+
+                trackList.ForEach(track => {
+                    track.AudioFeatures = audioFeatures[track.Id];
+                });
+
+                var leastDanceableTrack = trackList.OrderBy(x => x.AudioFeatures.Danceability).First();
+
+                return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
+                {
+                    Content = leastDanceableTrack
+                };
+            }
+
+            return new ApiResponse<TrackWithAudioFeatures>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
+        }
+
+        public async Task<ApiResponse<TrackWithAudioFeatures>> GetUserMostEnergeticSavedTrack(TokenSet tokenSet)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var trackList = savedTrackResponse.Content.Select(x => new TrackWithAudioFeatures(x.Track)).ToList();
+                var savedTrackIds = savedTrackResponse.Content.Select(x => x.Track.Id).Distinct().ToList();
+                var audioFeatures = (await GetAudioFeaturesForTracks(tokenSet, savedTrackIds, true)).Content.ToDictionary(x => x.TrackId);
+
+                trackList.ForEach(track => {
+                    track.AudioFeatures = audioFeatures[track.Id];
+                });
+
+                var mostEnergeticSong = trackList.OrderByDescending(x => x.AudioFeatures.Energy).First();
+
+                return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
+                {
+                    Content = mostEnergeticSong
+                };
+            }
+
+            return new ApiResponse<TrackWithAudioFeatures>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
+        }
+
+        public async Task<ApiResponse<TrackWithAudioFeatures>> GetUserLeastEnergeticSavedTrack(TokenSet tokenSet)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var trackList = savedTrackResponse.Content.Select(x => new TrackWithAudioFeatures(x.Track)).ToList();
+                var savedTrackIds = savedTrackResponse.Content.Select(x => x.Track.Id).Distinct().ToList();
+                var audioFeatures = (await GetAudioFeaturesForTracks(tokenSet, savedTrackIds, true)).Content.ToDictionary(x => x.TrackId);
+
+                trackList.ForEach(track => {
+                    track.AudioFeatures = audioFeatures[track.Id];
+                });
+
+                var leastEnergeticSong = trackList.OrderBy(x => x.AudioFeatures.Energy).First();
+
+                return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
+                {
+                    Content = leastEnergeticSong
+                };
+            }
+
+            return new ApiResponse<TrackWithAudioFeatures>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
+        }
+
+        
+
+        public async Task<ApiResponse<TrackWithAudioFeatures>> GetUserFastestTempoSavedTrack(TokenSet tokenSet)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var trackList = savedTrackResponse.Content.Select(x => new TrackWithAudioFeatures(x.Track)).ToList();
+                var savedTrackIds = savedTrackResponse.Content.Select(x => x.Track.Id).Distinct().ToList();
+                var audioFeatures = (await GetAudioFeaturesForTracks(tokenSet, savedTrackIds, true)).Content.ToDictionary(x => x.TrackId);
+
+                trackList.ForEach(track => {
+                    track.AudioFeatures = audioFeatures[track.Id];
+                });
+
+                var fastestTempoSong = trackList.OrderByDescending(x => x.AudioFeatures.Tempo).First();
+
+                return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
+                {
+                    Content = fastestTempoSong
+                };
+            }
+
+            return new ApiResponse<TrackWithAudioFeatures>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
+        }
+
+        public async Task<ApiResponse<TrackWithAudioFeatures>> GetUserSlowestTempoSavedTrack(TokenSet tokenSet)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var trackList = savedTrackResponse.Content.Select(x => new TrackWithAudioFeatures(x.Track)).ToList();
+                var savedTrackIds = savedTrackResponse.Content.Select(x => x.Track.Id).Distinct().ToList();
+                var audioFeatures = (await GetAudioFeaturesForTracks(tokenSet, savedTrackIds, true)).Content.ToDictionary(x => x.TrackId);
+
+                trackList.ForEach(track => {
+                    track.AudioFeatures = audioFeatures[track.Id];
+                });
+
+                var slowestTempoSong = trackList.OrderBy(x => x.AudioFeatures.Tempo).First();
+
+                return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
+                {
+                    Content = slowestTempoSong
+                };
+            }
+
+            return new ApiResponse<TrackWithAudioFeatures>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
+        }
+
+        public async Task<ApiResponse<TrackWithAudioFeatures>> GetUserHighestValenceSavedTrack(TokenSet tokenSet)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var trackList = savedTrackResponse.Content.Select(x => new TrackWithAudioFeatures(x.Track)).ToList();
+                var savedTrackIds = savedTrackResponse.Content.Select(x => x.Track.Id).Distinct().ToList();
+                var audioFeatures = (await GetAudioFeaturesForTracks(tokenSet, savedTrackIds, true)).Content.ToDictionary(x => x.TrackId);
+
+                trackList.ForEach(track => {
+                    track.AudioFeatures = audioFeatures[track.Id];
+                });
+
+                var highestValenceSong = trackList.OrderByDescending(x => x.AudioFeatures.Valence).First();
+
+                return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
+                {
+                    Content = highestValenceSong
+                };
+            }
+
+            return new ApiResponse<TrackWithAudioFeatures>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
+        }
+
+        public async Task<ApiResponse<TrackWithAudioFeatures>> GetUserLowestValenceSavedTrack(TokenSet tokenSet)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var trackList = savedTrackResponse.Content.Select(x => new TrackWithAudioFeatures(x.Track)).ToList();
+                var savedTrackIds = savedTrackResponse.Content.Select(x => x.Track.Id).Distinct().ToList();
+                var audioFeatures = (await GetAudioFeaturesForTracks(tokenSet, savedTrackIds, true)).Content.ToDictionary(x => x.TrackId);
+
+                trackList.ForEach(track => {
+                    track.AudioFeatures = audioFeatures[track.Id];
+                });
+
+                var lowestValenceSong = trackList.OrderBy(x => x.AudioFeatures.Valence).First();
+
+                return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
+                {
+                    Content = lowestValenceSong
+                };
+            }
+
+            return new ApiResponse<TrackWithAudioFeatures>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
+        }
+
+        
+
+        public async Task<ApiResponse<TrackWithAudioFeatures>> GetUserHighestLoudnessSavedTrack(TokenSet tokenSet)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var trackList = savedTrackResponse.Content.Select(x => new TrackWithAudioFeatures(x.Track)).ToList();
+                var savedTrackIds = savedTrackResponse.Content.Select(x => x.Track.Id).Distinct().ToList();
+                var audioFeatures = (await GetAudioFeaturesForTracks(tokenSet, savedTrackIds, true)).Content.ToDictionary(x => x.TrackId);
+
+                trackList.ForEach(track => {
+                    track.AudioFeatures = audioFeatures[track.Id];
+                });
+
+                var test = trackList.OrderByDescending(x => x.AudioFeatures.Loudness).Take(5);
+                var highestLoudnessSong = trackList.OrderByDescending(x => x.AudioFeatures.Loudness).First();
+
+                return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
+                {
+                    Content = highestLoudnessSong
+                };
+            }
+
+            return new ApiResponse<TrackWithAudioFeatures>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
+        }
+
+        public async Task<ApiResponse<TrackWithAudioFeatures>> GetUserLowestLoudnessSavedTrack(TokenSet tokenSet)
+        {
+            var savedTrackResponse = await GetUserSavedTracks(tokenSet);
+
+            if (savedTrackResponse.IsSuccessStatusCode)
+            {
+                var trackList = savedTrackResponse.Content.Select(x => new TrackWithAudioFeatures(x.Track)).ToList();
+                var savedTrackIds = savedTrackResponse.Content.Select(x => x.Track.Id).Distinct().ToList();
+                var audioFeatures = (await GetAudioFeaturesForTracks(tokenSet, savedTrackIds, true)).Content.ToDictionary(x => x.TrackId);
+
+                trackList.ForEach(track => {
+                    track.AudioFeatures = audioFeatures[track.Id];
+                });
+
+                var test = trackList.OrderBy(x => x.AudioFeatures.Loudness).Take(5);
+                var lowestLoudnessSong = trackList.OrderBy(x => x.AudioFeatures.Loudness).First();
+
+                return new ApiResponse<TrackWithAudioFeatures>(HttpStatusCode.OK)
+                {
+                    Content = lowestLoudnessSong
+                };
+            }
+
+            return new ApiResponse<TrackWithAudioFeatures>(savedTrackResponse.StatusCode)
+            {
+                ReasonPhrase = savedTrackResponse.ReasonPhrase
+            };
+        }
     }
 
     public interface ISpotifyService
     {
         Task<ApiResponse<User>> GetCurrentUser(TokenSet tokenSet);
-        Task<ApiResponse<AudioFeatures>> GetTrackAudioFeatures(TokenSet tokenSet, string trackId);
+        Task<ApiResponse<AudioFeatures>> GetAudioFeaturesForTrack(TokenSet tokenSet, string trackId);
+        Task<ApiResponse<List<AudioFeatures>>> GetAudioFeaturesForTracks(TokenSet tokenSet, List<string> trackIds, bool shouldCache = false);
         Task<ApiResponse<List<PlayHistory>>> GetLastTenPlayedTracks(TokenSet tokenSet);
         Task<ApiResponse<List<Track>>> GetUserTopTracks(TokenSet tokenSet, string timeRange, int limit);
         Task<ApiResponse<List<Artist>>> GetUserTopArtists(TokenSet tokenSet, string timeRange, int limit);
@@ -231,5 +548,15 @@ namespace SpotifyFunTime.Application
         Task<ApiResponse<Dictionary<string, int>>> GetUserSavedTracksByMonth(TokenSet tokenSet);
         Task<ApiResponse<List<Artist>>> GetUserMostPopularSavedArtists(TokenSet tokenSet, int limit);
         Task<ApiResponse<List<Artist>>> GetUserLeastPopularSavedArtists(TokenSet tokenSet, int limit);
+        Task<ApiResponse<TrackWithAudioFeatures>> GetUserMostDanceableSavedTrack(TokenSet tokenSet);
+        Task<ApiResponse<TrackWithAudioFeatures>> GetUserLeastDanceableSavedTrack(TokenSet tokenSet);
+        Task<ApiResponse<TrackWithAudioFeatures>> GetUserMostEnergeticSavedTrack(TokenSet tokenSet);
+        Task<ApiResponse<TrackWithAudioFeatures>> GetUserLeastEnergeticSavedTrack(TokenSet tokenSet);
+        Task<ApiResponse<TrackWithAudioFeatures>> GetUserFastestTempoSavedTrack(TokenSet tokenSet);
+        Task<ApiResponse<TrackWithAudioFeatures>> GetUserSlowestTempoSavedTrack(TokenSet tokenSet);
+        Task<ApiResponse<TrackWithAudioFeatures>> GetUserHighestValenceSavedTrack(TokenSet tokenSet);
+        Task<ApiResponse<TrackWithAudioFeatures>> GetUserLowestValenceSavedTrack(TokenSet tokenSet);
+        Task<ApiResponse<TrackWithAudioFeatures>> GetUserHighestLoudnessSavedTrack(TokenSet tokenSet);
+        Task<ApiResponse<TrackWithAudioFeatures>> GetUserLowestLoudnessSavedTrack(TokenSet tokenSet);
     }
 }
