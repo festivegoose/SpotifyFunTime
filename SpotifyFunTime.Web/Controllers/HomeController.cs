@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace SpotifyFunTime.Web.Controllers
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
     [Route("")]
     public class HomeController : BaseController
     {

@@ -7,6 +7,7 @@ using SpotifyFunTime.Contracts;
 
 namespace SpotifyFunTime.Web.Controllers
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
     public class AuthorizationController : BaseController
     {
         private readonly IClientConfiguration _config;
