@@ -2,25 +2,26 @@ using System;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using SpotifyFunTime.Application.Utilities;
+using SpotifyFunTime.Contracts;
 
 namespace SpotifyFunTime.Application
 {
     public class ContentCache : IContentCache
     {
-        private const int CACHE_EXPIRATION_MINUTES = 10;
-
         private readonly IMemoryCache _cache;
+        private readonly CacheConfiguration _config;
 
-        public ContentCache(IMemoryCache cache)
+        public ContentCache(IMemoryCache cache, CacheConfiguration config)
         {
             _cache = cache;
+            _config = config;
         }
 
         public void Set(string key, object content)
         {
             var cacheKey = Base64Utility.Encode(key);
             var compressedContent = CompressContent(content);
-            _cache.Set(cacheKey, compressedContent, TimeSpan.FromMinutes(CACHE_EXPIRATION_MINUTES));
+            _cache.Set(cacheKey, compressedContent, TimeSpan.FromMinutes(_config.Expiration));
         }
 
         public bool TryGet<T>(string key, out T content)
