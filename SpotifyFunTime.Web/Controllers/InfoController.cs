@@ -25,6 +25,6 @@ namespace SpotifyFunTime.Web.Controllers
         [Route("audio-features/{trackId}")]
         [ProducesResponseType(typeof(ApiResponse<AudioFeatures>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetTrackAudioFeatures(string trackId) =>
-            await MakeRequest(() => _service.GetTrackAudioFeatures(Tokens, trackId));
+            await MakeRequest(() => _service.GetAudioFeaturesForTrack(Tokens, trackId));
     }
 }
